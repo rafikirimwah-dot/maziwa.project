@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header" style="background: #dc3545;">
+                <h4 class="mb-0 text-white">Confirm Delete</h4>
+            </div>
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <p>Are you sure you want to delete the record for:</p>
+                <h5><strong>{{ record.farmer_name }}</strong></h5>
+                <p class="text-muted">Truck: {{ record.truck }} | Purity: {{ record.get_milk_purity_display }}</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Confirm Delete
+                        </button>
+                        <a href="{% url 'milk_inventory:dashboard' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

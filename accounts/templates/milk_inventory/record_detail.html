@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Milk Record Details</h4>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Farmer Name</dt>
+                    <dd class="col-sm-8">{{ record.farmer_name }}</dd>
+
+                    <dt class="col-sm-4">Farmer Location</dt>
+                    <dd class="col-sm-8">{{ record.farmer_location }}</dd>
+
+                    <dt class="col-sm-4">Collection Time</dt>
+                    <dd class="col-sm-8">{{ record.collection_time|date:"Y-m-d H:i" }}</dd>
+
+                    <dt class="col-sm-4">Milk Purity</dt>
+                    <dd class="col-sm-8">{{ record.get_milk_purity_display }}</dd>
+
+                    <dt class="col-sm-4">Collection Truck</dt>
+                    <dd class="col-sm-8">{{ record.truck }}</dd>
+
+                    <dt class="col-sm-4">Recorded By</dt>
+                    <dd class="col-sm-8">{{ record.recorded_by.username }}</dd>
+                </dl>
+                <a href="{% url 'milk_inventory:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

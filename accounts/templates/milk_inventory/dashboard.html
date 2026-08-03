@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <h3>{{ total_records }}</h3>
+            <p class="text-muted">Total Records</p>
+        </div>
+    </div>
+    <div class="col-md-9">
+        <div class="stats-card">
+            <h5>Purity Statistics</h5>
+            <div class="row">
+                {% for stat in purity_stats %}
+                <div class="col-md-4">
+                    <span class="badge-purity badge-{{ stat.milk_purity|lower }}">
+                        {{ stat.milk_purity }}: {{ stat.count }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="table-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Milk Records</h4>
+        {% if user.is_staff %}
+            <span class="badge bg-info">Admin View - All Records</span>
+        {% else %}
+            <span class="badge bg-secondary">{{ user.username|title }} View</span>
+        {% endif %}
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead style="background-color: var(--primary-blue); color: white;">
+                <tr>
+                    <th>Farmer</th>
+                    <th>Location</th>
+                    <th>Purity</th>
+                    <th>Truck</th>
+                    <th>Collection Time</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td><strong>{{ record.farmer_name }}</strong></td>
+                    <td>{{ record.farmer_location }}</td>
+                    <td>
+                        <span class="badge-purity badge-{{ record.milk_purity|lower }}">
+                            {{ record.get_milk_purity_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-{% if record.truck == 'TRUCK_A' %}primary{% else %}success{% endif %}">
+                            {{ record.truck }}
+                        </span>
+                    </td>
+                    <td>{{ record.collection_time|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <a href="{% url 'milk_inventory:record_detail' record.pk %}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'milk_inventory:edit_record' record.pk %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% if user.is_staff %}
+                        <a href="{% url 'milk_inventory:delete_record' record.pk %}" class="btn btn-sm btn-danger">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted"></i>
+                        <p class="mt-2">No records found. Start by adding a new record!</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
