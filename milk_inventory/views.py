@@ -13,6 +13,86 @@ from .serializers import MilkRecordSerializer, UserSerializer
 from .permissions import CanDeleteRecord, CanEditRecord, IsAdminUser as CustomIsAdminUser
 from .forms import MilkRecordForm
 
+# ============ API VIEWS (Already Updated) ============
+
+class MilkRecordListCreateView(generics.ListCreateAPIView):
+    """
+    Handles listing and creating milk records with file uploads.
+    """
+    serializer_class = MilkRecordSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['milk_purity', 'truck', 'farmer_name']
+    
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return MilkRecord.objects.none()
+            
+        if user.is_staff or user.is_superuser:
+            return MilkRecord.objects.all()
+        elif user.username == 'truck_a':
+            return MilkRecord.objects.filter(truck='TRUCK_A')
+        elif user.username == 'truck_b':
+            return MilkRecord.objects.filter(truck='TRUCK_B')
+        return MilkRecord.objects.none()
+    
+    def perform_create(self, serializer):
+        """
+        Save the record with the current user as recorded_by.
+        File uploads are handled automatically by DRF.
+        """
+        serializer.save(recorded_by=self.request.user)
+
+class MilkRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Handles retrieving, updating, and deleting records with file uploads.
+    """
+    serializer_class = MilkRecordSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return MilkRecord.objects.none()
+            
+        if user.is_staff or user.is_superuser:
+            return MilkRecord.objects.all()
+        elif user.username == 'truck_a':
+            return MilkRecord.objects.filter(truck='TRUCK_A')
+        elif user.username == 'truck_b':
+            return MilkRecord.objects.filter(truck='TRUCK_B')
+        return MilkRecord.objects.none()
+    
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAuthenticated()]
+        elif self.request.method in ['PUT', 'PATCH']:
+            return [IsAuthenticated(), CanEditRecord()]
+        elif self.request.method == 'DELETE':
+            return [IsAuthenticated(), CanDeleteRecord()]
+        return [IsAuthenticated()]
+    
+    def perform_update(self, serializer):
+        """
+        Handle file updates. The serializer will handle the file fields.
+        """
+        serializer.save()
+    
+    def perform_destroy(self, instance):
+        """
+        Delete the record and optionally delete associated files.
+        """
+        # Optionally delete files when record is deleted
+        # This prevents orphaned files
+        if instance.farmer_photo:
+            instance.farmer_photo.delete(save=False)
+        if instance.milk_certificate:
+            instance.milk_certificate.delete(save=False)
+        instance.delete()
+
+# ... rest of your views ...
+
 # ============ API VIEWS ============
 
 class MilkRecordListCreateView(generics.ListCreateAPIView):

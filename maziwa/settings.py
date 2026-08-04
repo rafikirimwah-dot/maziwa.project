@@ -160,3 +160,33 @@ SIMPLE_JWT = {
 
 # Crispy Forms
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# ============ STATIC & MEDIA FILES ============
+
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# ============ MEDIA FILES (User Uploads) ============
+# Media files are user-uploaded files (photos, documents, etc.)
+
+# MEDIA_URL: The URL that will serve the files
+# Example: http://localhost:8000/media/farmer_photos/john.jpg
+MEDIA_URL = '/media/'
+
+# MEDIA_ROOT: The filesystem path where files will be stored
+# Example: C:/Users/gbill/Documents/maziwa/maziwa.project/media/
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Create media directory if it doesn't exist
+os.makedirs(MEDIA_ROOT, exist_ok=True)
+
+# ============ REST OF SETTINGS ============
+# ... keep your existing settings ...

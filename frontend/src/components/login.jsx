@@ -129,31 +129,7 @@ const Login = () => {
                     </button>
                 </form>
 
-                <div style={{
-                    marginTop: '25px',
-                    padding: '15px',
-                    background: '#f8f9fa',
-                    borderRadius: '10px',
-                    fontSize: '13px'
-                }}>
-                    <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', textAlign: 'center' }}>
-                        Demo Accounts:
-                    </p>
-                    <div style={{ display: 'grid', gap: '5px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>👑 Admin</span>
-                            <span style={{ color: '#666' }}>cow / oppo</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>🚛 Truck A</span>
-                            <span style={{ color: '#666' }}>truck_a / truck123</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>🚛 Truck B</span>
-                            <span style={{ color: '#666' }}>truck_b / truck123</span>
-                        </div>
-                    </div>
-                </div>
+                {/* Demo accounts removed for security */}
             </div>
         </div>
     );

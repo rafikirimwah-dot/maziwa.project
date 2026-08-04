@@ -7,7 +7,7 @@ const RecordList = () => {
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { isAdmin } = useAuth();
+    const { isAdmin, user } = useAuth();
 
     useEffect(() => {
         fetchRecords();
@@ -17,12 +17,14 @@ const RecordList = () => {
         try {
             setLoading(true);
             const response = await api.get('/api/milk-records/');
+            console.debug('GET /api/milk-records/ response:', response);
             const items = response.data?.results || response.data || [];
+            console.debug('parsed items length:', items.length);
             setRecords(items);
             setError(null);
         } catch (err) {
             setError('Failed to load records');
-            console.error(err);
+            console.error('fetchRecords error:', err?.response || err);
         } finally {
             setLoading(false);
         }
@@ -58,6 +60,10 @@ const RecordList = () => {
             {records.length === 0 ? (
                 <div style={emptyStyle}>
                     <p>No records found</p>
+                    <div style={{ fontSize: 12, color: '#666', marginTop: 8 }}>
+                        <div>Current user: {user?.username || 'anonymous'}</div>
+                        <div>Access token present: {Boolean(localStorage.getItem('access_token')) ? 'yes' : 'no'}</div>
+                    </div>
                     <Link to="/add" style={addButtonStyle}>Add First Record</Link>
                 </div>
             ) : (
@@ -65,6 +71,7 @@ const RecordList = () => {
                     <table style={tableStyle}>
                         <thead>
                             <tr style={headerRowStyle}>
+                                <th>Photo</th>
                                 <th>Farmer</th>
                                 <th>Location</th>
                                 <th>Purity</th>
@@ -77,6 +84,17 @@ const RecordList = () => {
                         <tbody>
                             {records.map((record) => (
                                 <tr key={record.id} style={rowStyle}>
+                                    <td>
+                                        {record.farmer_photo_url ? (
+                                            <img 
+                                                src={record.farmer_photo_url} 
+                                                alt={record.farmer_name}
+                                                style={photoStyle}
+                                            />
+                                        ) : (
+                                            <div style={noPhotoStyle}>📷</div>
+                                        )}
+                                    </td>
                                     <td><strong>{record.farmer_name}</strong></td>
                                     <td>{record.farmer_location}</td>
                                     <td>
@@ -89,7 +107,10 @@ const RecordList = () => {
                                             {record.truck}
                                         </span>
                                     </td>
-                                    <td>{record.recorded_by_username}</td>
+                                    <td>
+                                        {record.recorded_by_username}
+                                        {record.recorded_by_role === 'admin' && ' 👑'}
+                                    </td>
                                     <td>{new Date(record.collection_time).toLocaleString()}</td>
                                     <td>
                                         <Link to={`/detail/${record.id}`} style={actionButton('info')}>
@@ -120,7 +141,8 @@ const RecordList = () => {
     );
 };
 
-// Styles
+// ============ STYLES ============
+
 const containerStyle = {
     background: 'white',
     borderRadius: '15px',
@@ -141,6 +163,26 @@ const badgeStyle = {
     background: '#1a4b8c',
     color: 'white',
     fontSize: '14px'
+};
+
+const photoStyle = {
+    width: '50px',
+    height: '50px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+    border: '2px solid #ddd'
+};
+
+const noPhotoStyle = {
+    width: '50px',
+    height: '50px',
+    borderRadius: '50%',
+    background: '#f0f0f0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '24px',
+    color: '#ccc'
 };
 
 const tableStyle = {

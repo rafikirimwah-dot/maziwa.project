@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import RecordList from './components/Recordlist';
 import RecordForm from './components/Recordform';
 import Login from './components/login';
@@ -20,13 +21,16 @@ const ProtectedRoute = ({ children }) => {
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
+    const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
     return (
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <div style={appStyle}>
-                {isAuthenticated && <Navbar />}
-                <div style={mainStyle}>
-                    <Routes>
+                {isAuthenticated && <Navbar onToggleSidebar={() => setSidebarOpen(s => !s)} />}
+                <div style={layoutStyle}>
+                    {isAuthenticated && <Sidebar open={sidebarOpen} />}
+                    <main style={mainStyle}>
+                        <Routes>
                         <Route path="/login" element={<Login />} />
                         <Route path="/" element={<Navigate to="/dashboard" />} />
                         <Route path="/dashboard" element={
@@ -59,6 +63,7 @@ const AppContent = () => {
                             </ProtectedRoute>
                         } />
                     </Routes>
+                    </main>
                 </div>
                 {isAuthenticated && (
                     <footer style={footerStyle}>
@@ -81,12 +86,17 @@ const appStyle = {
     flexDirection: 'column'
 };
 
+const layoutStyle = {
+    display: 'flex',
+    flex: 1,
+    minHeight: 'calc(100vh - 80px)'
+};
+
 const mainStyle = {
     flex: 1,
     padding: '20px',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    width: '100%'
+    width: '100%',
+    boxSizing: 'border-box'
 };
 
 const footerStyle = {

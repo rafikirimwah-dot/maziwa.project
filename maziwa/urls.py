@@ -25,3 +25,8 @@ if settings.DEBUG:
     # Only add MEDIA_URL if you have a MEDIA_ROOT defined
     if hasattr(settings, 'MEDIA_URL') and hasattr(settings, 'MEDIA_ROOT'):
         urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Serve media files during development
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

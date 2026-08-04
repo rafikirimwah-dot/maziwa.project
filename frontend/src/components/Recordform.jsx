@@ -7,23 +7,19 @@ const RecordForm = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [previewImage, setPreviewImage] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedCertificate, setSelectedCertificate] = useState(null);
+    
     const [formData, setFormData] = useState({
         farmer_name: '',
         farmer_location: '',
         milk_purity: 'MID',
         truck: 'TRUCK_A',
-        collection_time: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
-            .toISOString()
-            .slice(0, 16),
+        farmer_photo: null,
+        milk_certificate: null,
+        additional_notes: '',
     });
-
-    const formatForDateTimeLocal = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        const offset = date.getTimezoneOffset();
-        const localDate = new Date(date.getTime() - offset * 60000);
-        return localDate.toISOString().slice(0, 16);
-    };
 
     useEffect(() => {
         if (id) {
@@ -35,9 +31,25 @@ const RecordForm = () => {
         try {
             setLoading(true);
             const response = await api.get(`/api/milk-records/${id}/`);
-            setFormData(response.data);
+            const record = response.data;
+            
+            setFormData({
+                farmer_name: record.farmer_name || '',
+                farmer_location: record.farmer_location || '',
+                milk_purity: record.milk_purity || 'MID',
+                truck: record.truck || 'TRUCK_A',
+                farmer_photo: null,
+                milk_certificate: null,
+                additional_notes: record.additional_notes || '',
+            });
+            
+            // Set preview if photo exists
+            if (record.farmer_photo_url) {
+                setPreviewImage(record.farmer_photo_url);
+            }
         } catch (err) {
             setError('Failed to load record');
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -50,20 +62,82 @@ const RecordForm = () => {
         });
     };
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        const fieldName = e.target.name;
+        
+        if (file) {
+            // Update form data with file
+            setFormData({
+                ...formData,
+                [fieldName]: file
+            });
+            
+            // Preview image for photo
+            if (fieldName === 'farmer_photo') {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setPreviewImage(reader.result);
+                };
+                reader.readAsDataURL(file);
+                setSelectedFile(file.name);
+            } else if (fieldName === 'milk_certificate') {
+                setSelectedCertificate(file.name);
+            }
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
-            if (id) {
-                await api.put(`/api/milk-records/${id}/`, formData);
-            } else {
-                await api.post('/api/milk-records/', formData);
+            // Create FormData for file upload
+            const formDataToSend = new FormData();
+            
+            // Add text fields
+            formDataToSend.append('farmer_name', formData.farmer_name);
+            formDataToSend.append('farmer_location', formData.farmer_location);
+            formDataToSend.append('milk_purity', formData.milk_purity);
+            formDataToSend.append('truck', formData.truck);
+            formDataToSend.append('additional_notes', formData.additional_notes || '');
+            
+            // Add files if selected
+            if (formData.farmer_photo) {
+                formDataToSend.append('farmer_photo', formData.farmer_photo);
             }
+            if (formData.milk_certificate) {
+                formDataToSend.append('milk_certificate', formData.milk_certificate);
+            }
+
+            // Log FormData contents for debugging
+            console.log('Sending FormData:');
+            for (let pair of formDataToSend.entries()) {
+                console.log(pair[0], pair[1]);
+            }
+
+            let response;
+            if (id) {
+                // Update - use PUT with FormData
+                response = await api.put(`/api/milk-records/${id}/`, formDataToSend, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+            } else {
+                // Create - use POST with FormData
+                response = await api.post('/api/milk-records/', formDataToSend, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+            }
+
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to save');
+            console.error('Submit error:', err);
+            setError(err.response?.data?.message || 'Failed to save record');
         } finally {
             setLoading(false);
         }
@@ -80,11 +154,12 @@ const RecordForm = () => {
 
                 {error && (
                     <div style={errorBoxStyle}>
-                        {error}
+                        {typeof error === 'string' ? error : JSON.stringify(error)}
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit}>
+                    {/* Basic Fields */}
                     <div style={fieldStyle}>
                         <label style={labelStyle}>Farmer Name</label>
                         <input
@@ -138,18 +213,68 @@ const RecordForm = () => {
                         </select>
                     </div>
 
+                    {/* ============ FILE UPLOAD FIELDS ============ */}
+
+                    {/* Farmer Photo Upload */}
                     <div style={fieldStyle}>
-                        <label style={labelStyle}>Collection Time</label>
+                        <label style={labelStyle}>Farmer Photo</label>
                         <input
-                            type="datetime-local"
-                            name="collection_time"
-                            value={formData.collection_time}
+                            type="file"
+                            name="farmer_photo"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            style={fileInputStyle}
+                        />
+                        <small style={helpTextStyle}>
+                            Upload a photo of the farmer (JPG, PNG, etc.)
+                        </small>
+                        {selectedFile && (
+                            <div style={fileInfoStyle}>📷 Selected: {selectedFile}</div>
+                        )}
+                        {previewImage && (
+                            <div style={previewContainerStyle}>
+                                <img 
+                                    src={previewImage} 
+                                    alt="Farmer preview" 
+                                    style={previewImageStyle}
+                                />
+                                <p style={previewLabelStyle}>Farmer Photo Preview</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Milk Certificate Upload */}
+                    <div style={fieldStyle}>
+                        <label style={labelStyle}>Milk Certificate</label>
+                        <input
+                            type="file"
+                            name="milk_certificate"
+                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                            onChange={handleFileChange}
+                            style={fileInputStyle}
+                        />
+                        <small style={helpTextStyle}>
+                            Upload milk quality certificate (PDF, JPG, PNG, DOC)
+                        </small>
+                        {selectedCertificate && (
+                            <div style={fileInfoStyle}>📄 Selected: {selectedCertificate}</div>
+                        )}
+                    </div>
+
+                    {/* Additional Notes */}
+                    <div style={fieldStyle}>
+                        <label style={labelStyle}>Additional Notes</label>
+                        <textarea
+                            name="additional_notes"
+                            value={formData.additional_notes}
                             onChange={handleChange}
-                            required
-                            style={inputStyle}
+                            style={textareaStyle}
+                            rows="3"
+                            placeholder="Any additional notes about this milk collection..."
                         />
                     </div>
 
+                    {/* Buttons */}
                     <div style={buttonGroupStyle}>
                         <button
                             type="submit"
@@ -172,9 +297,10 @@ const RecordForm = () => {
     );
 };
 
-// Styles
+// ============ STYLES ============
+
 const containerStyle = {
-    maxWidth: '600px',
+    maxWidth: '700px',
     margin: '0 auto'
 };
 
@@ -191,7 +317,7 @@ const titleStyle = {
 };
 
 const fieldStyle = {
-    marginBottom: '15px'
+    marginBottom: '20px'
 };
 
 const labelStyle = {
@@ -205,8 +331,7 @@ const inputStyle = {
     padding: '10px',
     border: '2px solid #ddd',
     borderRadius: '8px',
-    fontSize: '16px',
-    transition: 'border-color 0.3s'
+    fontSize: '16px'
 };
 
 const selectStyle = {
@@ -216,6 +341,55 @@ const selectStyle = {
     borderRadius: '8px',
     fontSize: '16px',
     background: 'white'
+};
+
+const textareaStyle = {
+    width: '100%',
+    padding: '10px',
+    border: '2px solid #ddd',
+    borderRadius: '8px',
+    fontSize: '16px',
+    resize: 'vertical'
+};
+
+const fileInputStyle = {
+    display: 'block',
+    width: '100%',
+    padding: '10px',
+    border: '2px dashed #ddd',
+    borderRadius: '8px',
+    cursor: 'pointer'
+};
+
+const helpTextStyle = {
+    display: 'block',
+    marginTop: '5px',
+    color: '#666',
+    fontSize: '13px'
+};
+
+const fileInfoStyle = {
+    marginTop: '5px',
+    color: '#1a4b8c',
+    fontSize: '14px'
+};
+
+const previewContainerStyle = {
+    marginTop: '10px',
+    textAlign: 'center'
+};
+
+const previewImageStyle = {
+    maxWidth: '150px',
+    maxHeight: '150px',
+    borderRadius: '10px',
+    border: '2px solid #ddd'
+};
+
+const previewLabelStyle = {
+    marginTop: '5px',
+    fontSize: '12px',
+    color: '#666'
 };
 
 const buttonGroupStyle = {

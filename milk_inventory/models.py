@@ -22,6 +22,32 @@ class MilkRecord(models.Model):
     truck = models.CharField(max_length=10, choices=TRUCK_CHOICES)
     collection_time = models.DateTimeField(default=timezone.now)
     recorded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    # ============ NEW MEDIA FIELDS ============
+    # Farmer profile photo - ImageField for photos
+    farmer_photo = models.ImageField(
+        upload_to='farmer_photos/',  # Subfolder within media
+        blank=True,                  # Optional field
+        null=True,                   # Can be null in database
+        help_text='Upload a photo of the farmer'
+    )
+    
+    # Milk quality certificate - FileField for any document
+    milk_certificate = models.FileField(
+        upload_to='certificates/',
+        blank=True,
+        null=True,
+        help_text='Upload milk quality certificate (PDF, JPG, PNG)'
+    )
+    
+    # Additional notes/document - Text field for extra info
+    additional_notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Any additional notes about this milk collection'
+    )
+    
+    # Auto timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
