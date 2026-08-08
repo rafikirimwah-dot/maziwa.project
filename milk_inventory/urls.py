@@ -18,6 +18,7 @@ urlpatterns = [
     path('edit/<int:pk>/', views.edit_record, name='edit_record'),
     path('delete/<int:pk>/', views.delete_record, name='delete_record'),
     path('detail/<int:pk>/', views.record_detail, name='record_detail'),
+    path('farmer-images/<int:pk>/', views.farmer_images, name='farmer_images'),
     
     # REST API Endpoints
     path('api/', api_root, name='api_root'),

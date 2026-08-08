@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
 {% block content %}
@@ -19,6 +19,8 @@
                         {{ stat.milk_purity }}: {{ stat.count }}
                     </span>
                 </div>
+                {% empty %}
+                <div class="col-md-12 text-muted">No purity stats available.</div>
                 {% endfor %}
             </div>
         </div>
@@ -34,9 +36,9 @@
             <span class="badge bg-secondary">{{ user.username|title }} View</span>
         {% endif %}
     </div>
-    
+
     <div class="table-responsive">
-        <table class="table table-hover">
+        <table class="table table-hover align-middle">
             <thead style="background-color: var(--primary-blue); color: white;">
                 <tr>
                     <th>Farmer</th>
@@ -44,6 +46,8 @@
                     <th>Purity</th>
                     <th>Truck</th>
                     <th>Collection Time</th>
+                    <th>Farmer Photo</th>
+                    <th>Certificate</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -64,10 +68,30 @@
                     </td>
                     <td>{{ record.collection_time|date:"Y-m-d H:i" }}</td>
                     <td>
-                        <a href="{% url 'milk_inventory:record_detail' record.pk %}" class="btn btn-sm btn-info">
-                            <i class="fas fa-eye"></i>
+                        {% if record.farmer_photo %}
+                        <img src="{{ record.farmer_photo.url }}" alt="{{ record.farmer_name }}" class="img-thumbnail" style="width:70px; height:70px; object-fit:cover;">
+                        {% else %}
+                        <span class="text-muted small">No photo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if record.milk_certificate %}
+                            {% with record.milk_certificate.url as cert_url %}
+                                {% if cert_url.endswith ".jpg" or cert_url.endswith ".jpeg" or cert_url.endswith ".png" or cert_url.endswith ".gif" %}
+                                    <img src="{{ record.milk_certificate.url }}" alt="Cert {{ record.id }}" class="img-thumbnail" style="width:70px; height:70px; object-fit:cover;">
+                                {% else %}
+                                    <i class="fas fa-file-pdf fa-lg text-danger"></i>
+                                {% endif %}
+                            {% endwith %}
+                        {% else %}
+                            <span class="text-muted small">No cert</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'milk_inventory:farmer_images' record.pk %}" class="btn btn-sm btn-info me-1">
+                            <i class="fas fa-eye"></i> View
                         </a>
-                        <a href="{% url 'milk_inventory:edit_record' record.pk %}" class="btn btn-sm btn-warning">
+                        <a href="{% url 'milk_inventory:edit_record' record.pk %}" class="btn btn-sm btn-warning me-1">
                             <i class="fas fa-edit"></i>
                         </a>
                         {% if user.is_staff %}
@@ -79,7 +103,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center py-4">
+                    <td colspan="8" class="text-center py-4">
                         <i class="fas fa-inbox fa-3x text-muted"></i>
                         <p class="mt-2">No records found. Start by adding a new record!</p>
                     </td>
@@ -89,4 +113,33 @@
         </table>
     </div>
 </div>
+
+<style>
+    .img-thumbnail {
+        border-radius: 8px;
+    }
+
+    .badge-purity {
+        padding: 6px 12px;
+        border-radius: 12px;
+        color: white;
+    }
+
+    .badge-purity.badge-low {
+        background-color: #dc3545;
+    }
+
+    .badge-purity.badge-mid {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .badge-purity.badge-great {
+        background-color: #28a745;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+</style>
 {% endblock %}
